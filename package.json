@@ -19,7 +19,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck",
-    "test": "node --test \"test/**/*.test.mjs\"",
+    "test": "node --test",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
