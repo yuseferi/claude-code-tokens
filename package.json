@@ -1,11 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "claude-code-tokens",
+  "name": "claude-token-statusbar",
   "version": "0.1.0",
   "description": "Reactive token & cost status line for the Claude Code TUI",
   "type": "module",
   "bin": {
-    "claude-code-tokens": "./bin/claude-code-tokens.mjs"
+    "claude-token-statusbar": "./bin/claude-token-statusbar.mjs"
   },
   "files": [
     "bin",
@@ -38,12 +38,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yuseferi/claude-code-tokens.git"
+    "url": "git+https://github.com/yuseferi/claude-token-statusbar.git"
   },
   "bugs": {
-    "url": "https://github.com/yuseferi/claude-code-tokens/issues"
+    "url": "https://github.com/yuseferi/claude-token-statusbar/issues"
   },
-  "homepage": "https://github.com/yuseferi/claude-code-tokens#readme",
+  "homepage": "https://github.com/yuseferi/claude-token-statusbar#readme",
   "devDependencies": {
     "@types/node": "^25.0.3",
     "typescript": "^5.9.3"

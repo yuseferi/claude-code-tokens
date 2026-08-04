@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for wanting to help improve `claude-code-tokens`!
+Thanks for wanting to help improve `claude-token-statusbar`!
 
 ## Setup
 
@@ -20,7 +20,7 @@ npm ci
 2. Keep the package **dependency-free at runtime** — the whole point of the
    statusline script is that it runs instantly, every message, with zero npm
    dependencies. Adding a runtime dependency needs a strong justification.
-3. If you change rendering, run `node bin/claude-code-tokens.mjs test` to confirm
+3. If you change rendering, run `node bin/claude-token-statusbar.mjs test` to confirm
    the sample line still looks right.
 4. Update the README if user-facing behavior changed.
 

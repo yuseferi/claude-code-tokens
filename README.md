@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="https://img.shields.io/npm/v/claude-code-tokens" alt="npm version">
-  <img src="https://img.shields.io/npm/dm/claude-code-tokens" alt="npm downloads">
-  <img src="https://img.shields.io/npm/l/claude-code-tokens" alt="license">
+  <img src="https://img.shields.io/npm/v/claude-token-statusbar" alt="npm version">
+  <img src="https://img.shields.io/npm/dm/claude-token-statusbar" alt="npm downloads">
+  <img src="https://img.shields.io/npm/l/claude-token-statusbar" alt="license">
   <img src="https://img.shields.io/badge/statusline-claude%20code-blueviolet" alt="Claude Code">
 </p>
 
-# claude-code-tokens
+# claude-token-statusbar
 
 A reactive token & cost status line for the **Claude Code** TUI. Live token counts,
 cumulative session spend, and cache usage — right in the terminal, updated on every
@@ -20,7 +20,7 @@ message.
 ## Why?
 
 Claude Code shows token usage only in the full screen `/status` view. With
-`claude-code-tokens` you always know, at a glance:
+`claude-token-statusbar` you always know, at a glance:
 
 - **How many tokens** you've sent in and gotten back this session (cumulative)
 - **What it cost** so far
@@ -43,10 +43,10 @@ Claude Code shows token usage only in the full screen `/status` view. With
 
 ```bash
 # install the CLI (anywhere)
-npm install -g claude-code-tokens
+npm install -g claude-token-statusbar
 
 # configure the status line for the current user
-claude-code-tokens install
+claude-token-statusbar install
 ```
 
 Restart `claude` (or start a new session) and the status line appears at the bottom.
@@ -57,14 +57,14 @@ Restart `claude` (or start a new session) and the status line appears at the bot
 ## Usage
 
 ```bash
-claude-code-tokens install [--scope user|project]   # default: user (~/.claude)
-claude-code-tokens uninstall [--scope user|project]
-claude-code-tokens test                              # print a sample line
+claude-token-statusbar install [--scope user|project]   # default: user (~/.claude)
+claude-token-statusbar uninstall [--scope user|project]
+claude-token-statusbar test                              # print a sample line
 ```
 
 - `--scope user` writes to `~/.claude/settings.json` (recommended).
 - `--scope project` writes to `<cwd>/.claude/settings.json`.
-- No npx needed — `claude-code-tokens` is a real binary after install.
+- No npx needed — `claude-token-statusbar` is a real binary after install.
 
 ### Manual setup (no installer)
 
