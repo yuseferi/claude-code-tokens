@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 import { install, uninstall, runTest } from "../src/install.mjs"
 
-const HELP = `claude-statusbar — reactive token & cost status line for Claude Code
+const HELP = `claude-code-tokens — reactive token & cost status line for Claude Code
 
 Usage:
-  claude-statusbar install [--scope user|project]   Configure the status line (default: user)
-  claude-statusbar uninstall [--scope user|project] Remove the status line
-  claude-statusbar test                              Print a sample status line
-  claude-statusbar help                              Show this help
+  claude-code-tokens install [--scope user|project]   Configure the status line (default: user)
+  claude-code-tokens uninstall [--scope user|project] Remove the status line
+  claude-code-tokens test                              Print a sample status line
+  claude-code-tokens help                              Show this help
 
 Options:
   --scope user|project   Write to ~/.claude/settings.json (default) or <cwd>/.claude/settings.json
   --dry-run              Print what would change without writing anything (install/uninstall)
 
 Examples:
-  npx claude-statusbar@latest install
-  npx claude-statusbar@latest test
+  npx claude-code-tokens@latest install
+  npx claude-code-tokens@latest test
 `
 
 function parseArgs(argv) {

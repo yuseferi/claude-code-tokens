@@ -27,7 +27,7 @@ const RESET = "\x1b[0m"
  * @returns {string}
  */
 const cachePath = (sessionId) =>
-  path.join(os.tmpdir(), `claude-statusbar-${sessionId}.json`)
+  path.join(os.tmpdir(), `claude-code-tokens-${sessionId}.json`)
 
 /** @returns {Promise<string>} */
 function readStdin() {
