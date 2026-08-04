@@ -1,0 +1,8 @@
+{"type":"user","message":{"role":"user","content":"help me debug the auth flow"}}
+{"type":"assistant","usage":{"input_tokens":12800,"output_tokens":2400,"cache_read_input_tokens":9200,"cache_creation_input_tokens":1500,"costUSD":0.021},"costUSD":0.021,"message":{"role":"assistant","content":"..."}}
+{"type":"user","message":{"role":"user","content":"help me debug the auth flow"}}
+{"type":"assistant","usage":{"input_tokens":2100,"output_tokens":4800,"cache_read_input_tokens":4100,"cache_creation_input_tokens":200,"costUSD":0.034},"costUSD":0.034,"message":{"role":"assistant","content":"..."}}
+{"type":"user","message":{"role":"user","content":"help me debug the auth flow"}}
+{"type":"assistant","usage":{"input_tokens":3100,"output_tokens":1200,"cache_read_input_tokens":8700,"cache_creation_input_tokens":300,"costUSD":0.018},"costUSD":0.018,"message":{"role":"assistant","content":"..."}}
+{"type":"user","message":{"role":"user","content":"help me debug the auth flow"}}
+{"type":"assistant","usage":{"input_tokens":1900,"output_tokens":7600,"cache_read_input_tokens":3300,"cache_creation_input_tokens":900,"costUSD":0.029},"costUSD":0.029,"message":{"role":"assistant","content":"..."}}

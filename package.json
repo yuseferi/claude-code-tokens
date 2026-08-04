@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "claude-statusline",
+  "version": "0.1.0",
+  "description": "Reactive token & cost status line for the Claude Code TUI",
+  "type": "module",
+  "bin": {
+    "claude-statusline": "./bin/claude-statusline.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "docs/screenshots",
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck",
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "statusline",
+    "status-line",
+    "tokens",
+    "token-usage",
+    "cost",
+    "spend",
+    "terminal",
+    "anthropic"
+  ],
+  "author": "Yusef Mohamadi (https://github.com/yuseferi)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuseferi/claude-statusline.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yuseferi/claude-statusline/issues"
+  },
+  "homepage": "https://github.com/yuseferi/claude-statusline#readme",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  }
+}
