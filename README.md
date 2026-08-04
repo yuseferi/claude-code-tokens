@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="https://img.shields.io/npm/v/claude-statusline" alt="npm version">
-  <img src="https://img.shields.io/npm/dm/claude-statusline" alt="npm downloads">
-  <img src="https://img.shields.io/npm/l/claude-statusline" alt="license">
+  <img src="https://img.shields.io/npm/v/claude-statusbar" alt="npm version">
+  <img src="https://img.shields.io/npm/dm/claude-statusbar" alt="npm downloads">
+  <img src="https://img.shields.io/npm/l/claude-statusbar" alt="license">
   <img src="https://img.shields.io/badge/statusline-claude%20code-blueviolet" alt="Claude Code">
 </p>
 
-# claude-statusline
+# claude-statusbar
 
 A reactive token & cost status line for the **Claude Code** TUI. Live token counts,
 cumulative session spend, and cache usage — right in the terminal, updated on every
@@ -20,7 +20,7 @@ message.
 ## Why?
 
 Claude Code shows token usage only in the full screen `/status` view. With
-`claude-statusline` you always know, at a glance:
+`claude-statusbar` you always know, at a glance:
 
 - **How many tokens** you've sent in and gotten back this session (cumulative)
 - **What it cost** so far
@@ -43,10 +43,10 @@ Claude Code shows token usage only in the full screen `/status` view. With
 
 ```bash
 # install the CLI (anywhere)
-npm install -g claude-statusline
+npm install -g claude-statusbar
 
 # configure the status line for the current user
-claude-statusline install
+claude-statusbar install
 ```
 
 Restart `claude` (or start a new session) and the status line appears at the bottom.
@@ -57,14 +57,14 @@ Restart `claude` (or start a new session) and the status line appears at the bot
 ## Usage
 
 ```bash
-claude-statusline install [--scope user|project]   # default: user (~/.claude)
-claude-statusline uninstall [--scope user|project]
-claude-statusline test                              # print a sample line
+claude-statusbar install [--scope user|project]   # default: user (~/.claude)
+claude-statusbar uninstall [--scope user|project]
+claude-statusbar test                              # print a sample line
 ```
 
 - `--scope user` writes to `~/.claude/settings.json` (recommended).
 - `--scope project` writes to `<cwd>/.claude/settings.json`.
-- No npx needed — `claude-statusline` is a real binary after install.
+- No npx needed — `claude-statusbar` is a real binary after install.
 
 ### Manual setup (no installer)
 
