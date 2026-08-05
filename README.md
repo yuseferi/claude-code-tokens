@@ -15,7 +15,7 @@ message.
 ![statusline-demo](./docs/screenshots/statusline-anim.svg)
 
 ```
-[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 12%  $0.10
+[Sonnet 5]  my-app  effort high  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 12%  age 1h 30m  skills 3  $0.10
 ```
 
 ## Why?
@@ -47,10 +47,13 @@ most people find out how much a session cost **after** the damage is done. With
 - **Skill suggestions** — when context is high, auto-detects a matching skill from
   `~/.claude/skills` or `.claude/skills` and suggests it (disable with
   `CLAUDE_TS_SKILLS=0`)
+- **Context at a glance** — working folder, reasoning-effort level, session age,
+  git branch (opt-in), and installed-skill count alongside the token metrics
 - **Dependency-free** — pure Node, no npm runtime deps, never crashes the TUI
 - **One-command install / uninstall** — writes the `statusLine` into your
   `~/.claude/settings.json` (with a `.bak` backup), or per-project
-- **Fast** — transcript results are cached by `session_id` + file mtime/size
+- **Fast** — transcript, git, and skill results are cached (per session or with a
+  short TTL)
 
 ## Install
 
@@ -101,11 +104,16 @@ The status line shows, left to right:
 
 | Segment | Meaning |
 | --- | --- |
-| `[Model]` | `model.display_name` from the current payload |
+| `[Model]` | `model.display_name` (context-size suffix, e.g. `(200k context)`, stripped) |
+| `<folder>` | Working-directory basename from `workspace.current_dir` / `cwd` |
+| `effort` | Reasoning-effort level, shown only when the model reports it |
+| `git` | Git branch, opt-in via `CLAUDE_TS_GIT=1` (shown only inside a repo) |
 | `in` | Cumulative input tokens this session |
 | `out` | Cumulative output tokens this session |
 | `cache` | Cumulative cache reads / cache writes |
-| `ctx` | Live context-window usage % (color-coded: green below `CLAUDE_TS_CONTEXT_WARN`, yellow at warn, red at critical; hidden while null) |
+| `ctx` | Live context-window usage % with a severity-colored progress bar (green below `CLAUDE_TS_CONTEXT_WARN`, yellow at warn, red at critical; hidden while null) |
+| `age` | How long the session has been open (shown once ≥ 1 minute) |
+| `skills` | Number of installed skills found in `~/.claude/skills` and `.claude/skills` |
 | `$` | Cumulative session cost (client estimate) |
 
 All token counts are **cumulative for the session** — summed from the session
@@ -119,9 +127,25 @@ When any threshold below is crossed, the status line prints a second row with an
 action hint, e.g.:
 
 ```
-[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 92%  $0.10
+[Sonnet 5]  my-app  effort high  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 92% [█████░]  age 1h 30m  skills 3  $0.10
 context 92% used — consider /compact or a new session
 ```
+
+## Colors
+
+The status line uses a small, consistent palette (see the demo above):
+
+| Element | Color |
+| --- | --- |
+| Labels (`in`, `out`, `cache`, …) | Dim gray |
+| `<folder>`, `effort`, `in` | Cyan |
+| `out` | Magenta |
+| `ctx` % + progress bar | Green → yellow at `CLAUDE_TS_CONTEXT_WARN` → red at `CLAUDE_TS_CONTEXT_CRIT` |
+| `$` cost | Green under `$5`, yellow under `$20`, red at `$20`+ (bold) |
+| `[Model]` | Bright-white on a gray chip |
+| Nudge row | Warning nudge on a yellow banner; critical nudge on a red banner |
+
+Set `NO_COLOR` to render plain monochrome text instead.
 
 All knobs are environment variables with sensible defaults:
 
@@ -133,15 +157,18 @@ All knobs are environment variables with sensible defaults:
 | `CLAUDE_TS_AGE_CRIT` | `4h` | Session age that triggers a red "consider closing it" nudge |
 | `CLAUDE_TS_RATE_WARN` | `80` | 5h rate-limit % that triggers a usage nudge |
 | `CLAUDE_TS_SKILLS` | `1` | Set to `0` to disable skill suggestions |
+| `CLAUDE_TS_GIT` | `0` | Set to `1` to show the git branch on line 1 |
+| `CLAUDE_TS_GIT_TTL` | `30` | Seconds to cache the git branch between refreshes |
 
 Durations accept `ms`, `s`, `m`, `h` suffixes (e.g. `CLAUDE_TS_AGE_WARN=90m`).
 Set them in your shell profile, or inline in the `command` in your
-`~/.claude/settings.json`.
+`~/.claude/settings.json`. Skill suggestions are found by scanning
+`~/.claude/skills` and `<project>/.claude/skills` for `SKILL.md` files and
+matching their `name`/`description` against context-related keywords (compact,
+context, session, memory, …). They only appear when the context nudge fires.
 
-Skill suggestions are found by scanning `~/.claude/skills` and
-`<project>/.claude/skills` for `SKILL.md` files and matching their `name`/
-`description` against context-related keywords (compact, context, session,
-memory, …). They only appear when the context nudge fires.
+> Git and skill counts are fetched once per TTL (`CLAUDE_TS_GIT_TTL`, or 30s) and
+> cached in the temp dir, so the status line stays instant even at a 1s refresh.
 
 ## How it works
 

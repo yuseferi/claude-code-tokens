@@ -24,14 +24,14 @@ function parseDurationMs(value, fallback) {
  * @param {number} fallback
  * @returns {number}
  */
-function envNum(value, fallback) {
+export function envNum(value, fallback) {
   if (value == null || value === "") return fallback
   const n = Number(value)
   return Number.isFinite(n) ? n : fallback
 }
 
 /** @param {number} ms @returns {string} */
-function fmtDuration(ms) {
+export function fmtDuration(ms) {
   const totalMin = Math.floor(ms / 60_000)
   if (totalMin >= 60) {
     const h = Math.floor(totalMin / 60)
@@ -75,6 +75,16 @@ function detectSkills(paths) {
     }
   }
   return skills
+}
+
+/**
+ * Count installed skills across the user and project skill directories.
+ *
+ * @param {{ home?: string, cwd?: string, envDir?: string }} paths
+ * @returns {number}
+ */
+export function countSkills(paths) {
+  return detectSkills(paths).length
 }
 
 /**

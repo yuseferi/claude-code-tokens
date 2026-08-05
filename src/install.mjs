@@ -128,7 +128,8 @@ export function runTest() {
     cwd: "/Users/you/projects/my-app",
     session_id: "test-session-0001",
     transcript_path: os.devNull,
-    model: { id: "claude-sonnet-5", display_name: "Sonnet" },
+    model: { id: "claude-sonnet-5", display_name: "Sonnet (200k context)" },
+    effort: { level: "high" },
     cost: { total_cost_usd: 0.42, total_duration_ms: 5_400_000 },
     context_window: {
       total_input_tokens: 15500,

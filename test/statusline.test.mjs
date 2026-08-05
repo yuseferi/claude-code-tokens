@@ -10,11 +10,14 @@ import { nudge } from "../src/nudges.mjs"
 const PKG_DIR = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const RENDERER = path.join(PKG_DIR, "src", "statusline.mjs")
 
+/** Isolated HOME so skill scans are deterministic (no user skills in tests). */
+const HOME_ISOLATION = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-home-"))
+
 function runRenderer(payload, env = {}) {
   const result = spawnSync(process.execPath, [RENDERER], {
     input: JSON.stringify(payload),
     encoding: "utf8",
-    env: { ...process.env, ...env },
+    env: { ...process.env, HOME: HOME_ISOLATION, ...env },
   })
   return result.stdout.trim()
 }
@@ -267,4 +270,145 @@ test("ctx segment honors NO_COLOR", () => {
   const out = runRenderer({ context_window: { used_percentage: 96 } }, { NO_COLOR: "1" })
   assert.match(out, /ctx 96%/)
   assert.equal(out.includes("\x1b["), false)
+})
+
+test("age segment shows session duration when >= 1m", () => {
+  const line = stripAnsi(
+    runRenderer({ cost: { total_duration_ms: 5_400_000 } }),
+  )
+  assert.match(line, /age 1h 30m/)
+
+  const hidden = stripAnsi(runRenderer({ cost: { total_duration_ms: 30_000 } }))
+  assert.doesNotMatch(hidden, /age/)
+})
+
+test("model display name strips the context-size suffix", () => {
+  const line = stripAnsi(
+    runRenderer({ model: { display_name: "Sonnet 5 (200k context)" } }),
+  )
+  assert.match(line, /\[Sonnet 5\]/)
+  assert.doesNotMatch(line, /200k/)
+})
+
+test("effort segment shows when present and hides when absent", () => {
+  const withEffort = stripAnsi(runRenderer({ effort: { level: "high" } }))
+  assert.match(withEffort, /effort high/)
+
+  const withoutEffort = stripAnsi(runRenderer({}))
+  assert.doesNotMatch(withoutEffort, /effort/)
+})
+
+test("folder segment shows the basename of the working directory", () => {
+  const line = stripAnsi(
+    runRenderer({ cwd: "/Users/you/projects/my-app" }),
+  )
+  assert.match(line, /my-app/)
+})
+
+test("git segment appears only when CLAUDE_TS_GIT=1 and cwd is a repo", (t) => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-repo-"))
+  t.after(() => fs.rmSync(repo, { recursive: true, force: true }))
+
+  const git = spawnSync("git", ["init", "--quiet", "-b", "main"], { cwd: repo })
+  assert.equal(git.status, 0, "git init should succeed")
+
+  spawnSync("git", ["config", "user.email", "test@example.com"], { cwd: repo })
+  spawnSync("git", ["config", "user.name", "Test"], { cwd: repo })
+  const commit = spawnSync("git", ["commit", "--quiet", "--allow-empty", "-m", "init"], { cwd: repo })
+  assert.equal(commit.status, 0, "initial commit should succeed")
+
+  const on = stripAnsi(
+    runRenderer({ cwd: repo }, { CLAUDE_TS_GIT: "1" }),
+  )
+  assert.match(on, /git main/)
+
+  const off = stripAnsi(runRenderer({ cwd: repo }))
+  assert.doesNotMatch(off, /git main/)
+
+  const notRepo = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-norepo-"))
+  t.after(() => fs.rmSync(notRepo, { recursive: true, force: true }))
+  const missing = stripAnsi(
+    runRenderer({ cwd: notRepo }, { CLAUDE_TS_GIT: "1" }),
+  )
+  assert.doesNotMatch(missing, /git /)
+})
+
+test("skills segment shows a count and hides when none exist", (t) => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-skills-home-"))
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }))
+  writeSkill(path.join(home, ".claude", "skills"), "compact-context", "Compacts the conversation context.")
+
+  const withSkills = stripAnsi(runRenderer({}, { HOME: home }))
+  assert.match(withSkills, /skills 1/)
+
+  const emptyHome = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-noskills-"))
+  t.after(() => fs.rmSync(emptyHome, { recursive: true, force: true }))
+  const withoutSkills = stripAnsi(runRenderer({}, { HOME: emptyHome }))
+  assert.doesNotMatch(withoutSkills, /skills/)
+})
+
+test("ctx segment includes a severity-colored progress bar", () => {
+  const warn = runRenderer({ context_window: { used_percentage: 88 } })
+  assert.match(stripAnsi(warn), /ctx 88% \[█████░\]/)
+  assert.match(warn, /\x1b\[33m\[█████░\]/)
+
+  const crit = runRenderer({ context_window: { used_percentage: 96 } })
+  assert.match(stripAnsi(crit), /ctx 96% \[██████\]/)
+  assert.match(crit, /\x1b\[31m\[██████\]/)
+
+  const ok = runRenderer({ context_window: { used_percentage: 10 } })
+  assert.match(stripAnsi(ok), /ctx 10% \[█░░░░░\]/)
+  assert.match(ok, /\x1b\[32m\[█░░░░░\]/)
+})
+
+test("ctx bar is omitted when used_percentage is null", () => {
+  const out = stripAnsi(runRenderer({ context_window: { used_percentage: null } }))
+  assert.doesNotMatch(out, /ctx/)
+  assert.doesNotMatch(out, /█/)
+})
+
+test("in is cyan and out is magenta", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-colors-"))
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
+  const transcript = writeTranscript(dir, [
+    JSON.stringify({ type: "assistant", message: { usage: { input_tokens: 1000, output_tokens: 500 } } }),
+  ])
+  const out = runRenderer({ session_id: "sess-color", transcript_path: transcript })
+  assert.match(out, /\x1b\[36m1\.0k\x1b\[0m/)   // in = cyan
+  assert.match(out, /\x1b\[35m500\x1b\[0m/)     // out = magenta
+})
+
+test("cost is tiered by amount", () => {
+  const cheap = runRenderer({ cost: { total_cost_usd: 1 } })
+  assert.match(cheap, /\x1b\[1m\x1b\[32m\$1\.00\x1b\[0m/) // green < $5
+
+  const mid = runRenderer({ cost: { total_cost_usd: 12 } })
+  assert.match(mid, /\x1b\[1m\x1b\[33m\$12\.00\x1b\[0m/) // yellow < $20
+
+  const dear = runRenderer({ cost: { total_cost_usd: 25 } })
+  assert.match(dear, /\x1b\[1m\x1b\[31m\$25\.00\x1b\[0m/) // red >= $20
+})
+
+test("model gets a chip background", () => {
+  const out = runRenderer({ model: { display_name: "Sonnet 5" } })
+  assert.match(out, /\x1b\[100m\x1b\[97m\[Sonnet 5\]\x1b\[0m/)
+})
+
+test("nudge row uses a warning banner background", () => {
+  const warn = runRenderer({ context_window: { used_percentage: 88 } })
+  assert.match(warn, /\n\x1b\[43m\x1b\[30mcontext 88% used — consider \/compact or a new session\x1b\[0m$/)
+
+  const crit = runRenderer({ context_window: { used_percentage: 96 } })
+  assert.match(crit, /\n\x1b\[41m\x1b\[97mcontext 96% used — start a new session or \/compact\x1b\[0m$/)
+})
+
+test("NO_COLOR strips chip, banner, and bar colors", () => {
+  const out = runRenderer(
+    { context_window: { used_percentage: 96 }, model: { display_name: "Sonnet 5" }, cost: { total_cost_usd: 25 } },
+    { NO_COLOR: "1" },
+  )
+  assert.equal(out.includes("\x1b["), false)
+  assert.match(out, /\[Sonnet 5\]/)
+  assert.match(out, /ctx 96% \[██████\]/)
+  assert.match(out, /\$25\.00/)
 })
