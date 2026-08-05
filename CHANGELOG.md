@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/yuseferi/claude-token-statusbar/compare/v0.2.2...v0.3.0) (2026-08-05)
+
+
+### Features
+
+* colorize status line with cyan/magenta palette, ctx bar, cost tiers, model chip, and nudge banners ([2c35066](https://github.com/yuseferi/claude-token-statusbar/commit/2c35066fc99e25a7cf581178ce108ad34bb2541c))
+
 # Changelog
 
 All notable changes to this project are documented in this file.
