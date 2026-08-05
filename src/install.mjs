@@ -58,16 +58,18 @@ export function install(scope) {
   const settingsFile = settingsPath(scope)
   const settings = readSettings(settingsFile)
 
-  if (settings.statusLine) {
-    return {
-      changed: false,
-      message: `statusLine is already configured in ${settingsFile}. No changes made.`,
-    }
-  }
-
   const claudeDir = path.dirname(settingsFile)
   fs.mkdirSync(claudeDir, { recursive: true })
   fs.copyFileSync(SCRIPT_SOURCE, SCRIPT_DEST())
+
+  if (settings.statusLine) {
+    return {
+      changed: false,
+      message:
+        `Refreshed status line script → ${SCRIPT_DEST()}\n` +
+        `statusLine already configured in ${settingsFile}. No changes made.`,
+    }
+  }
 
   const backup = writeBackup(settingsFile)
   settings.statusLine = {

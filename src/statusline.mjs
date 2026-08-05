@@ -29,6 +29,9 @@ const RESET = "\x1b[0m"
 const cachePath = (sessionId) =>
   path.join(os.tmpdir(), `claude-token-statusbar-${sessionId}.json`)
 
+/** Bump when the cache schema changes to invalidate stale entries. */
+const CACHE_VERSION = 2
+
 /** @returns {Promise<string>} */
 function readStdin() {
   return new Promise((resolve) => {
@@ -58,11 +61,12 @@ function parseTranscript(transcriptPath) {
       continue
     }
     if (entry.type !== "assistant") continue
-    if (entry.usage) {
-      totals.input += entry.usage.input_tokens ?? 0
-      totals.output += entry.usage.output_tokens ?? 0
-      totals.cacheRead += entry.usage.cache_read_input_tokens ?? 0
-      totals.cacheWrite += entry.usage.cache_creation_input_tokens ?? 0
+    const usage = entry.message?.usage ?? entry.usage
+    if (usage) {
+      totals.input += usage.input_tokens ?? 0
+      totals.output += usage.output_tokens ?? 0
+      totals.cacheRead += usage.cache_read_input_tokens ?? 0
+      totals.cacheWrite += usage.cache_creation_input_tokens ?? 0
     }
     totals.cost += entry.costUSD ?? 0
   }
@@ -83,12 +87,20 @@ function cachedTotals(sessionId, transcriptPath) {
   } catch {
     cached = null
   }
-  if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+  if (
+    cached &&
+    cached.version === CACHE_VERSION &&
+    cached.mtimeMs === stat.mtimeMs &&
+    cached.size === stat.size
+  ) {
     return cached
   }
   const totals = parseTranscript(transcriptPath)
   try {
-    fs.writeFileSync(file, JSON.stringify({ ...totals, mtimeMs: stat.mtimeMs, size: stat.size }))
+    fs.writeFileSync(
+      file,
+      JSON.stringify({ ...totals, version: CACHE_VERSION, mtimeMs: stat.mtimeMs, size: stat.size }),
+    )
   } catch {
     // cache is best-effort
   }

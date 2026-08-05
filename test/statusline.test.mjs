@@ -35,12 +35,11 @@ test("formats and sums a transcript into a status line", (t) => {
     JSON.stringify({ type: "user", message: { role: "user", content: "hi" } }),
     JSON.stringify({
       type: "assistant",
-      usage: { input_tokens: 12300, output_tokens: 4500, cache_read_input_tokens: 8200, cache_creation_input_tokens: 1000 },
+      message: { usage: { input_tokens: 12300, output_tokens: 4500, cache_read_input_tokens: 8200, cache_creation_input_tokens: 1000 } },
     }),
     JSON.stringify({
       type: "assistant",
-      usage: { input_tokens: 200, output_tokens: 100, cache_read_input_tokens: 50, cache_creation_input_tokens: 10 },
-      costUSD: 0.005,
+      message: { usage: { input_tokens: 200, output_tokens: 100, cache_read_input_tokens: 50, cache_creation_input_tokens: 10 } },
     }),
     JSON.stringify({ type: "garbage-not-json" }),
   ])
@@ -66,7 +65,7 @@ test("falls back to transcript cost when stdin cost is missing", (t) => {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
 
   const transcript = writeTranscript(dir, [
-    JSON.stringify({ type: "assistant", usage: { input_tokens: 1000, output_tokens: 100 }, costUSD: 0.123 }),
+    JSON.stringify({ type: "assistant", message: { usage: { input_tokens: 1000, output_tokens: 100 } }, costUSD: 0.123 }),
   ])
 
   const line = stripAnsi(
@@ -74,6 +73,43 @@ test("falls back to transcript cost when stdin cost is missing", (t) => {
   )
 
   assert.match(line, /\$0\.12/)
+})
+
+test("parses real Claude Code transcript shape (usage nested in message)", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-"))
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  const transcript = writeTranscript(dir, [
+    JSON.stringify({ type: "mode", mode: "normal" }),
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        model: "claude-sonnet-5",
+        usage: { input_tokens: 2, output_tokens: 20, cache_read_input_tokens: 30253, cache_creation_input_tokens: 13359 },
+      },
+    }),
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        model: "claude-sonnet-5",
+        usage: { input_tokens: 2, output_tokens: 456, cache_read_input_tokens: 43612, cache_creation_input_tokens: 32 },
+      },
+    }),
+  ])
+
+  const line = stripAnsi(
+    runRenderer({
+      session_id: "sess-real",
+      transcript_path: transcript,
+      model: { display_name: "Sonnet 5" },
+      cost: { total_cost_usd: 0.52 },
+    }),
+  )
+
+  assert.match(line, /in 4/)
+  assert.match(line, /out 476/)
+  assert.match(line, /cache 73\.9k\/13\.4k/)
+  assert.match(line, /\$0\.52/)
 })
 
 test("handles missing session data without throwing", () => {
@@ -87,7 +123,7 @@ test("caches totals across runs and stays stable", (t) => {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
 
   const transcript = writeTranscript(dir, [
-    JSON.stringify({ type: "assistant", usage: { input_tokens: 1500, output_tokens: 300, cache_read_input_tokens: 100, cache_creation_input_tokens: 50 } }),
+    JSON.stringify({ type: "assistant", message: { usage: { input_tokens: 1500, output_tokens: 300, cache_read_input_tokens: 100, cache_creation_input_tokens: 50 } } }),
   ])
 
   const payload = { session_id: "sess-3", transcript_path: transcript, model: { display_name: "Sonnet" }, cost: { total_cost_usd: 0.1 } }

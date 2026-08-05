@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "claude-token-statusbar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reactive token & cost status line for the Claude Code TUI",
   "type": "module",
   "bin": {
