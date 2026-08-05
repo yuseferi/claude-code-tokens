@@ -7,6 +7,8 @@ import { render } from "./statusline.mjs"
 const SCRIPT_FILENAME = "statusline.mjs"
 const PACKAGE_DIR = path.dirname(fileURLToPath(import.meta.url))
 const SCRIPT_SOURCE = path.join(PACKAGE_DIR, "statusline.mjs")
+/** Local (non-node) modules statusline.mjs imports, copied alongside it. */
+const MODULE_SOURCES = ["nudges.mjs"].map((f) => [f, path.join(PACKAGE_DIR, f)])
 const SCRIPT_DEST = () => path.join(os.homedir(), ".claude", SCRIPT_FILENAME)
 const DEFAULT_REFRESH_INTERVAL = 1
 
@@ -61,6 +63,9 @@ export function install(scope) {
   const claudeDir = path.dirname(settingsFile)
   fs.mkdirSync(claudeDir, { recursive: true })
   fs.copyFileSync(SCRIPT_SOURCE, SCRIPT_DEST())
+  for (const [name, source] of MODULE_SOURCES) {
+    fs.copyFileSync(source, path.join(path.dirname(SCRIPT_DEST()), name))
+  }
 
   if (settings.statusLine) {
     return {
@@ -105,6 +110,10 @@ export function uninstall(scope) {
   }
   if (fs.existsSync(SCRIPT_DEST())) {
     fs.rmSync(SCRIPT_DEST())
+  }
+  for (const [name] of MODULE_SOURCES) {
+    const moduleDest = path.join(path.dirname(SCRIPT_DEST()), name)
+    if (fs.existsSync(moduleDest)) fs.rmSync(moduleDest)
   }
   return {
     changed: hadStatusLine,
