@@ -3,6 +3,7 @@
   <img src="https://img.shields.io/npm/dm/claude-token-statusbar" alt="npm downloads">
   <img src="https://img.shields.io/npm/l/claude-token-statusbar" alt="license">
   <img src="https://img.shields.io/badge/statusline-claude%20code-blueviolet" alt="Claude Code">
+  <img src="https://img.shields.io/github/stars/yuseferi/claude-token-statusbar" alt="GitHub stars">
 </p>
 
 # claude-token-statusbar
@@ -11,7 +12,7 @@ A reactive token & cost status line for the **Claude Code** TUI. Live token coun
 cumulative session spend, and cache usage — right in the terminal, updated on every
 message.
 
-![statusline-demo](./docs/screenshots/statusline-demo.svg)
+![statusline-demo](./docs/screenshots/statusline-anim.svg)
 
 ```
 [Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  $0.10
@@ -19,13 +20,18 @@ message.
 
 ## Why?
 
-Claude Code shows token usage only in the full screen `/status` view. With
+Claude Code shows token usage only in the full screen `/status` view — which means
+most people find out how much a session cost **after** the damage is done. With
 `claude-token-statusbar` you always know, at a glance:
 
 - **How many tokens** you've sent in and gotten back this session (cumulative)
-- **What it cost** so far
+- **What it cost** so far — in real time, so you can run `/compact` before it balloons
 - **How much cache** you're writing vs. reading (the lever that drives cost down)
 - Which **model** you're talking to
+
+> 💡 Enterprise budgets (Anthropic, OpenAI, etc.) get exhausted fast when usage is
+> invisible. Seeing the per-session cost climbing is the nudge most people need to
+> `/compact` more often and keep long-running sessions lean.
 
 ## Features
 
@@ -112,6 +118,14 @@ so the status line stays instant.
 - Requires Node.js **20+**
 - Tested with Claude Code **2.1.x** (statusline feature)
 - Works with any model/plan Claude Code reports usage for
+
+## Spread the word
+
+Liked it? Star the repo, share it, or add the badge to your own README:
+
+```markdown
+[![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge-flat.svg)](https://github.com/hesreallyhim/awesome-claude-code)
+```
 
 ## Development
 
