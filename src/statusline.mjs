@@ -2,6 +2,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { nudge } from "./nudges.mjs"
 
 /** @param {number} value @returns {string} */
 const fmtTokens = (value) => {
@@ -20,7 +21,11 @@ const fmtCost = (value) => {
 const DIM = "\x1b[90m"
 const BOLD = "\x1b[1m"
 const GREEN = "\x1b[32m"
+const YELLOW = "\x1b[33m"
+const RED = "\x1b[31m"
 const RESET = "\x1b[0m"
+
+const noColor = typeof process.env.NO_COLOR !== "undefined" && process.env.NO_COLOR !== ""
 
 /**
  * @param {string} sessionId
@@ -150,7 +155,14 @@ export function render(data) {
 
   let line = parts.join("  ")
   if (model) line = `${DIM}[${model}]${RESET}  ${line}`
-  return line
+
+  const hint = nudge(data)
+  if (!hint) return line
+
+  const color = hint.severity === "crit" ? RED : YELLOW
+  const paint = noColor ? "" : `${BOLD}${color}`
+  const unpaint = noColor ? "" : RESET
+  return `${line}\n${paint}${hint.text}${unpaint}`
 }
 
 async function main() {
@@ -158,7 +170,8 @@ async function main() {
     const raw = await readStdin()
     if (!raw.trim()) return
     const data = JSON.parse(raw)
-    process.stdout.write(render(data) + "\n")
+    const lines = render(data).split("\n")
+    for (const l of lines) process.stdout.write(l + "\n")
   } catch {
     // A status line must never throw or print noise to the TUI.
   }

@@ -5,6 +5,7 @@ import os from "node:os"
 import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { nudge } from "../src/nudges.mjs"
 
 const PKG_DIR = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const RENDERER = path.join(PKG_DIR, "src", "statusline.mjs")
@@ -26,6 +27,14 @@ function writeTranscript(dir, lines) {
   fs.writeFileSync(file, lines.join("\n") + "\n")
   return file
 }
+
+function writeSkill(dir, name, description) {
+  const skillDir = path.join(dir, name)
+  fs.mkdirSync(skillDir, { recursive: true })
+  fs.writeFileSync(path.join(skillDir, "SKILL.md"), `---\nname: ${name}\ndescription: "${description}"\n---\n`)
+}
+
+const EMPTY_PATHS = { home: "", cwd: "", envDir: undefined }
 
 test("formats and sums a transcript into a status line", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-"))
@@ -132,4 +141,98 @@ test("caches totals across runs and stays stable", (t) => {
 
   assert.equal(first, second)
   assert.match(first, /in 1\.5k/)
+})
+
+test("render emits a second nudge line when context is critically high", () => {
+  const lines = stripAnsi(
+    runRenderer({ context_window: { used_percentage: 96 }, model: { display_name: "Sonnet" } }),
+  ).split("\n")
+
+  assert.equal(lines.length, 2)
+  assert.match(lines[0], /\[Sonnet\]/)
+  assert.match(lines[1], /context 96% used — start a new session or \/compact/)
+})
+
+test("render stays single-line when no nudge fires", () => {
+  const out = stripAnsi(runRenderer({ context_window: { used_percentage: 10 }, cost: { total_duration_ms: 60_000 } }))
+  assert.equal(out.split("\n").length, 1)
+  assert.match(out, /in 0/)
+})
+
+test("nudge warns on context percentage and falls back to /compact", () => {
+  const hint = nudge({ context_window: { used_percentage: 88 } }, {}, EMPTY_PATHS)
+  assert.equal(hint.severity, "warn")
+  assert.match(hint.text, /context 88% used — consider \/compact or a new session/)
+})
+
+test("nudge is null under thresholds", () => {
+  const hint = nudge(
+    { context_window: { used_percentage: 50 }, cost: { total_duration_ms: 60_000 }, rate_limits: { five_hour: { used_percentage: 40 } } },
+    {},
+    EMPTY_PATHS,
+  )
+  assert.equal(hint, null)
+})
+
+test("nudge flags long-running sessions from wall-clock duration", () => {
+  const warn = nudge({ cost: { total_duration_ms: 3 * 3_600_000 } }, {}, EMPTY_PATHS)
+  assert.equal(warn.severity, "warn")
+  assert.match(warn.text, /session open 3h — consider closing it/)
+
+  const crit = nudge({ cost: { total_duration_ms: 5 * 3_600_000 } }, {}, EMPTY_PATHS)
+  assert.equal(crit.severity, "crit")
+  assert.match(crit.text, /session open 5h — consider closing it/)
+})
+
+test("nudge flags five-hour rate limit usage", () => {
+  const hint = nudge({ rate_limits: { five_hour: { used_percentage: 82 } } }, {}, EMPTY_PATHS)
+  assert.equal(hint.severity, "warn")
+  assert.match(hint.text, /82% of 5h rate limit used/)
+})
+
+test("nudge priority: critical context beats age warn", () => {
+  const hint = nudge(
+    { context_window: { used_percentage: 96 }, cost: { total_duration_ms: 3 * 3_600_000 } },
+    {},
+    EMPTY_PATHS,
+  )
+  assert.equal(hint.severity, "crit")
+  assert.match(hint.text, /context 96%/)
+})
+
+test("nudge appends a detected skill suggestion when context is high", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-skills-"))
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
+  writeSkill(dir, "compact-context", "Compacts the conversation context to keep sessions lean.")
+
+  const hint = nudge({ context_window: { used_percentage: 90 } }, {}, { home: "", cwd: "", envDir: dir })
+  assert.match(hint.text, /— try compact-context/)
+})
+
+test("nudge omits skill hint when none match", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-skills-"))
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
+  writeSkill(dir, "pr-review", "Reviews the current branch's changes.")
+
+  const hint = nudge({ context_window: { used_percentage: 90 } }, {}, { home: "", cwd: "", envDir: dir })
+  assert.doesNotMatch(hint.text, /try /)
+})
+
+test("nudge respects CLAUDE_TS_SKILLS=0 opt-out", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ccs-skills-"))
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
+  writeSkill(dir, "compact-context", "Compacts the conversation context to keep sessions lean.")
+
+  const hint = nudge({ context_window: { used_percentage: 90 } }, { CLAUDE_TS_SKILLS: "0" }, { home: "", cwd: "", envDir: dir })
+  assert.doesNotMatch(hint.text, /try /)
+})
+
+test("nudge honors env var thresholds", () => {
+  const hint = nudge(
+    { context_window: { used_percentage: 60 } },
+    { CLAUDE_TS_CONTEXT_WARN: "50" },
+    EMPTY_PATHS,
+  )
+  assert.equal(hint.severity, "warn")
+  assert.match(hint.text, /context 60%/)
 })

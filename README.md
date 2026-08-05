@@ -40,6 +40,13 @@ most people find out how much a session cost **after** the damage is done. With
 - **Cost tracking** — uses the client-estimated cost from Claude Code, with a
   transcript fallback so you see spend even in older sessions
 - **Cache read/write breakdown** — know exactly how much prompt caching is doing
+- **Session-hygiene nudges** — when the context window nears capacity, the session
+  has been open for a while, or the 5h rate limit is nearly used, a second status
+  line row appears with an action hint (start a new session, `/compact`, or close
+  the session)
+- **Skill suggestions** — when context is high, auto-detects a matching skill from
+  `~/.claude/skills` or `.claude/skills` and suggests it (disable with
+  `CLAUDE_TS_SKILLS=0`)
 - **Dependency-free** — pure Node, no npm runtime deps, never crashes the TUI
 - **One-command install / uninstall** — writes the `statusLine` into your
   `~/.claude/settings.json` (with a `.bak` backup), or per-project
@@ -104,6 +111,36 @@ All token counts are **cumulative for the session** — summed from the session
 transcript — rather than the current context window. Cost comes from
 `cost.total_cost_usd` when present, falling back to summed `costUSD` from the
 transcript.
+
+## Nudges & configuration
+
+When any threshold below is crossed, the status line prints a second row with an
+action hint, e.g.:
+
+```
+[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  $0.10
+context 92% used — consider /compact or a new session
+```
+
+All knobs are environment variables with sensible defaults:
+
+| Env var | Default | Meaning |
+| --- | --- | --- |
+| `CLAUDE_TS_CONTEXT_WARN` | `85` | Context % that triggers a yellow "consider `/compact`" nudge |
+| `CLAUDE_TS_CONTEXT_CRIT` | `95` | Context % that triggers a red "start a new session" nudge |
+| `CLAUDE_TS_AGE_WARN` | `2h` | Session wall-clock age that triggers a "consider closing it" nudge |
+| `CLAUDE_TS_AGE_CRIT` | `4h` | Session age that triggers a red "consider closing it" nudge |
+| `CLAUDE_TS_RATE_WARN` | `80` | 5h rate-limit % that triggers a usage nudge |
+| `CLAUDE_TS_SKILLS` | `1` | Set to `0` to disable skill suggestions |
+
+Durations accept `ms`, `s`, `m`, `h` suffixes (e.g. `CLAUDE_TS_AGE_WARN=90m`).
+Set them in your shell profile, or inline in the `command` in your
+`~/.claude/settings.json`.
+
+Skill suggestions are found by scanning `~/.claude/skills` and
+`<project>/.claude/skills` for `SKILL.md` files and matching their `name`/
+`description` against context-related keywords (compact, context, session,
+memory, …). They only appear when the context nudge fires.
 
 ## How it works
 

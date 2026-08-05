@@ -120,10 +120,11 @@ export function runTest() {
     session_id: "test-session-0001",
     transcript_path: os.devNull,
     model: { id: "claude-sonnet-5", display_name: "Sonnet" },
-    cost: { total_cost_usd: 0.42 },
+    cost: { total_cost_usd: 0.42, total_duration_ms: 5_400_000 },
     context_window: {
       total_input_tokens: 15500,
       total_output_tokens: 1200,
+      used_percentage: 92,
       current_usage: {
         input_tokens: 8500,
         output_tokens: 1200,
@@ -132,5 +133,5 @@ export function runTest() {
       },
     },
   }
-  process.stdout.write(render(payload) + "\n")
+  for (const line of render(payload).split("\n")) process.stdout.write(line + "\n")
 }

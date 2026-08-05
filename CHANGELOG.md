@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-05
+
+### Added
+
+- Session-hygiene nudges: when the context window nears capacity, the session
+  has been open a long time, or the 5h rate limit is nearly used, a second
+  status line row appears with an action hint (start a new session, `/compact`,
+  or close the session).
+- Skill suggestions: when context is high, the status line auto-detects a
+  matching skill from `~/.claude/skills` or `.claude/skills` (`SKILL.md`
+  `name`/`description`) and suggests it. Disable with `CLAUDE_TS_SKILLS=0`.
+- Threshold tuning via environment variables: `CLAUDE_TS_CONTEXT_WARN` (85),
+  `CLAUDE_TS_CONTEXT_CRIT` (95), `CLAUDE_TS_AGE_WARN` (2h), `CLAUDE_TS_AGE_CRIT`
+  (4h), `CLAUDE_TS_RATE_WARN` (80).
+- `NO_COLOR` support for the nudge row.
+
 ## [0.1.1] - 2026-08-05
 
 ### Fixed
