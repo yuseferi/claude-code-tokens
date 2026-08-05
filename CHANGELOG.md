@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-08-05
+
+### Added
+
+- Persistent `ctx N%` segment on line 1 showing live context-window usage,
+  color-coded by the configured warn/critical thresholds. Hidden while
+  `used_percentage` is null (before the first API response or after
+  `/compact`). The line-2 nudge row is unchanged.
+- `NO_COLOR` now applies to the whole status line, not just the nudge row.
+
 ## [0.2.1] - 2026-08-05
 
 ### Fixed

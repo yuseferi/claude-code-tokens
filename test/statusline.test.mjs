@@ -10,10 +10,11 @@ import { nudge } from "../src/nudges.mjs"
 const PKG_DIR = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const RENDERER = path.join(PKG_DIR, "src", "statusline.mjs")
 
-function runRenderer(payload) {
+function runRenderer(payload, env = {}) {
   const result = spawnSync(process.execPath, [RENDERER], {
     input: JSON.stringify(payload),
     encoding: "utf8",
+    env: { ...process.env, ...env },
   })
   return result.stdout.trim()
 }
@@ -235,4 +236,35 @@ test("nudge honors env var thresholds", () => {
   )
   assert.equal(hint.severity, "warn")
   assert.match(hint.text, /context 60%/)
+})
+
+test("line 1 shows a persistent ctx percentage", () => {
+  const line = stripAnsi(
+    runRenderer({ context_window: { used_percentage: 12 }, model: { display_name: "Sonnet" } }),
+  )
+  assert.match(line, /\[Sonnet\].*ctx 12%/)
+})
+
+test("ctx segment is color-coded by severity", () => {
+  const warn = runRenderer({ context_window: { used_percentage: 88 } })
+  const crit = runRenderer({ context_window: { used_percentage: 96 } })
+  const ok = runRenderer({ context_window: { used_percentage: 40 } })
+
+  assert.match(stripAnsi(warn), /ctx 88%/)
+  assert.match(warn, /\x1b\[33m88%/)
+  assert.match(crit, /\x1b\[31m96%/)
+  assert.doesNotMatch(ok, /ctx 40%\x1b\[33m/)
+})
+
+test("ctx segment omitted when used_percentage is null", () => {
+  const line = stripAnsi(
+    runRenderer({ context_window: { used_percentage: null }, model: { display_name: "Sonnet" } }),
+  )
+  assert.doesNotMatch(line, /ctx/)
+})
+
+test("ctx segment honors NO_COLOR", () => {
+  const out = runRenderer({ context_window: { used_percentage: 96 } }, { NO_COLOR: "1" })
+  assert.match(out, /ctx 96%/)
+  assert.equal(out.includes("\x1b["), false)
 })

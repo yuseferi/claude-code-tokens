@@ -2,7 +2,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { nudge } from "./nudges.mjs"
+import { contextLevel, nudge } from "./nudges.mjs"
 
 /** @param {number} value @returns {string} */
 const fmtTokens = (value) => {
@@ -145,16 +145,24 @@ export function render(data) {
 
   const parts = []
   /** @param {string} label @param {string} value */
-  const seg = (label, value) => parts.push(`${DIM}${label}${RESET} ${value}`)
+  const seg = (label, value) => parts.push(`${noColor ? "" : DIM}${label}${noColor ? "" : RESET} ${value}`)
   seg("in", fmtTokens(totals.input))
   seg("out", fmtTokens(totals.output))
   if (totals.cacheRead > 0 || totals.cacheWrite > 0) {
     seg("cache", `${fmtTokens(totals.cacheRead)}/${fmtTokens(totals.cacheWrite)}`)
   }
-  parts.push(`${GREEN}${BOLD}${fmtCost(cost)}${RESET}`)
+  const usedPct = data?.context_window?.used_percentage
+  if (typeof usedPct === "number") {
+    const pct = Math.round(usedPct)
+    const level = contextLevel(usedPct)
+    const ctxColor = noColor ? "" : level === "crit" ? RED : level === "warn" ? YELLOW : ""
+    const ctxReset = noColor ? "" : RESET
+    seg("ctx", `${ctxColor}${pct}%${ctxReset}`)
+  }
+  parts.push(`${noColor ? "" : GREEN}${noColor ? "" : BOLD}${fmtCost(cost)}${noColor ? "" : RESET}`)
 
   let line = parts.join("  ")
-  if (model) line = `${DIM}[${model}]${RESET}  ${line}`
+  if (model) line = `${noColor ? "" : DIM}[${model}]${noColor ? "" : RESET}  ${line}`
 
   const hint = nudge(data)
   if (!hint) return line

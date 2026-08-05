@@ -91,6 +91,22 @@ function suggestSkill(skills, intent) {
 }
 
 /**
+ * Classify context usage against the configured thresholds.
+ *
+ * @param {number | undefined} usedPct
+ * @param {Record<string, string | undefined>} [env]
+ * @returns {"ok" | "warn" | "crit"}
+ */
+export function contextLevel(usedPct, env = process.env) {
+  const contextWarn = envNum(env.CLAUDE_TS_CONTEXT_WARN, 85)
+  const contextCrit = envNum(env.CLAUDE_TS_CONTEXT_CRIT, 95)
+  if (typeof usedPct !== "number") return "ok"
+  if (usedPct >= contextCrit) return "crit"
+  if (usedPct >= contextWarn) return "warn"
+  return "ok"
+}
+
+/**
  * Decide whether to nudge the user toward a fresh session or /compact.
  *
  * @param {any} data - The status line stdin payload.
@@ -99,8 +115,6 @@ function suggestSkill(skills, intent) {
  * @returns {{ severity: "warn" | "crit", text: string } | null}
  */
 export function nudge(data, env = process.env, paths = { home: os.homedir(), cwd: process.cwd() }) {
-  const contextWarn = envNum(env.CLAUDE_TS_CONTEXT_WARN, 85)
-  const contextCrit = envNum(env.CLAUDE_TS_CONTEXT_CRIT, 95)
   const rateWarn = envNum(env.CLAUDE_TS_RATE_WARN, 80)
   const ageWarn = parseDurationMs(env.CLAUDE_TS_AGE_WARN, 2 * HOUR_MS)
   const ageCrit = parseDurationMs(env.CLAUDE_TS_AGE_CRIT, 4 * HOUR_MS)
@@ -109,11 +123,12 @@ export function nudge(data, env = process.env, paths = { home: os.homedir(), cwd
   const candidates = []
 
   const usedPct = data?.context_window?.used_percentage
+  const level = contextLevel(usedPct, env)
   if (typeof usedPct === "number") {
     const pct = Math.round(usedPct)
-    if (pct >= contextCrit) {
+    if (level === "crit") {
       candidates.push({ severity: "crit", order: 1, text: `context ${pct}% used — start a new session or /compact`, context: true })
-    } else if (pct >= contextWarn) {
+    } else if (level === "warn") {
       candidates.push({ severity: "warn", order: 1, text: `context ${pct}% used — consider /compact or a new session`, context: true })
     }
   }

@@ -15,7 +15,7 @@ message.
 ![statusline-demo](./docs/screenshots/statusline-anim.svg)
 
 ```
-[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  $0.10
+[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 12%  $0.10
 ```
 
 ## Why?
@@ -105,6 +105,7 @@ The status line shows, left to right:
 | `in` | Cumulative input tokens this session |
 | `out` | Cumulative output tokens this session |
 | `cache` | Cumulative cache reads / cache writes |
+| `ctx` | Live context-window usage % (color-coded: green below `CLAUDE_TS_CONTEXT_WARN`, yellow at warn, red at critical; hidden while null) |
 | `$` | Cumulative session cost (client estimate) |
 
 All token counts are **cumulative for the session** — summed from the session
@@ -118,7 +119,7 @@ When any threshold below is crossed, the status line prints a second row with an
 action hint, e.g.:
 
 ```
-[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  $0.10
+[Sonnet 5]  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 92%  $0.10
 context 92% used — consider /compact or a new session
 ```
 
