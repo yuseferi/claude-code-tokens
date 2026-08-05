@@ -1,6 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/claude-token-statusbar" alt="npm version">
   <img src="https://img.shields.io/npm/dm/claude-token-statusbar" alt="npm downloads">
+  <img src="https://github.com/yuseferi/claude-token-statusbar/actions/workflows/ci.yml/badge.svg" alt="CI status">
   <img src="https://img.shields.io/npm/l/claude-token-statusbar" alt="license">
   <img src="https://img.shields.io/badge/statusline-claude%20code-blueviolet" alt="Claude Code">
   <img src="https://img.shields.io/github/stars/yuseferi/claude-token-statusbar" alt="GitHub stars">
@@ -18,6 +19,23 @@ message.
 [Sonnet 5]  my-app  effort high  in 19.9k  out 16.0k  cache 25.3k/2.9k  ctx 12%  age 1h 30m  skills 3  $0.10
 ```
 
+> ⭐ If this saves you from a surprise bill, a star helps other Claude Code users find it.
+
+## Contents
+
+- [Why?](#why)
+- [vs. `/status`](#vs-status)
+- [Features](#features)
+- [Install](#install)
+- [Usage](#usage)
+- [What you're looking at](#what-youre-looking-at)
+- [Nudges & configuration](#nudges--configuration)
+- [Colors](#colors)
+- [How it works](#how-it-works)
+- [Compatibility](#compatibility)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Why?
 
 Claude Code shows token usage only in the full screen `/status` view — which means
@@ -32,6 +50,15 @@ most people find out how much a session cost **after** the damage is done. With
 > 💡 Enterprise budgets (Anthropic, OpenAI, etc.) get exhausted fast when usage is
 > invisible. Seeing the per-session cost climbing is the nudge most people need to
 > `/compact` more often and keep long-running sessions lean.
+
+## vs. `/status`
+
+| | Built-in `/status` | `claude-token-statusbar` |
+| --- | --- | --- |
+| Visibility | On demand — you have to ask | Always on, updates every message |
+| Scope | Current context window only | Cumulative for the whole session |
+| Cost warning | None | Color-coded, plus `/compact` nudges before you overrun context or the 5h rate limit |
+| Setup | Built in | One command, `.bak`-backed, uninstallable |
 
 ## Features
 
@@ -57,11 +84,17 @@ most people find out how much a session cost **after** the damage is done. With
 
 ## Install
 
-```bash
-# install the CLI (anywhere)
-npm install -g claude-token-statusbar
+Requires Node.js **20+**.
 
-# configure the status line for the current user
+```bash
+# no install — configures the status line for the current user, then exits
+npx claude-token-statusbar install
+```
+
+Or install the binary permanently:
+
+```bash
+npm install -g claude-token-statusbar
 claude-token-statusbar install
 ```
 
@@ -186,11 +219,9 @@ so the status line stays instant.
 
 ## Spread the word
 
-Liked it? Star the repo, share it, or add the badge to your own README:
-
-```markdown
-[![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge-flat.svg)](https://github.com/hesreallyhim/awesome-claude-code)
-```
+Liked it? [Star the repo](https://github.com/yuseferi/claude-token-statusbar), open
+an issue for anything missing, or mention it to a teammate burning through their
+Claude Code budget without knowing it.
 
 ## Development
 
